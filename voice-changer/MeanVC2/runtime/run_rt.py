@@ -74,6 +74,12 @@ MODEL_PATHS = {
 DEFAULT_TARGET_WAV = "test_audio/common_voice_en_10119832.wav"
 
 
+def _load_torchscript(path, map_location=None):
+    """Use Python's Unicode-safe open instead of TorchScript's Windows fopen."""
+    with open(path, "rb") as checkpoint:
+        return torch.jit.load(checkpoint, map_location=map_location)
+
+
 # ---------------------------------------------------------------------------
 # VC Runner
 # ---------------------------------------------------------------------------
@@ -98,7 +104,7 @@ class VCRunner:
 
         # --- ASR (JIT Fast-U2++) ---
         print("[Init] Loading ASR encoder (JIT)...")
-        self.asr = torch.jit.load(self._asr_ckpt)
+        self.asr = _load_torchscript(self._asr_ckpt)
         self.asr.eval()
 
         # --- VC ---
@@ -107,7 +113,7 @@ class VCRunner:
 
         # --- Vocoder ---
         print("[Init] Loading vocoder...")
-        self.vocoder = torch.jit.load(VOCODER_PATH)
+        self.vocoder = _load_torchscript(VOCODER_PATH)
         if device == "cuda":
             self.vocoder = self.vocoder.to(device)
 

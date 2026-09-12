@@ -75,6 +75,11 @@ explicit file exclusions keep runtime reports, logs, `.cache`, `__pycache__`,
 and generated `active_*.wav` samples out of the installer even if the staged
 application was used for QA.
 
+The compiler uses four LZMA2 block workers with 64 MiB blocks for large model
+and CUDA files, reducing rebuild time on multicore machines. This requires
+roughly 630 MiB of compression memory; see Inno Setup's
+[block-thread documentation](https://jrsoftware.org/ishelp/topic_setup_lzmanumblockthreads.htm).
+
 To compile an already staged payload directly, including a version override:
 
 ```powershell

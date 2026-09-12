@@ -39,6 +39,10 @@ UninstallDisplayIcon={app}\Music2Mic.exe
 WizardStyle=modern
 InfoBeforeFile={#AddBackslash(SourcePath)}InstallerInfo.txt
 Compression=lzma2/normal
+; Compress large model/CUDA files in parallel; 64 MiB blocks keep dictionary
+; reuse within each block while using approximately 630 MiB during the build.
+LZMANumBlockThreads=4
+LZMABlockSize=65536
 SolidCompression=no
 DiskSpanning=yes
 DiskSliceSize=1900000000
