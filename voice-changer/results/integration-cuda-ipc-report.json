@@ -1,0 +1,48 @@
+{
+  "scope": "Actual CUDA model and physical USB microphone to explicit VB-CABLE; no speech requested or recorded",
+  "events": [
+    {
+      "received": 6866.882491,
+      "event": "ready",
+      "muted": true,
+      "input_device": 24,
+      "output_device": 22,
+      "input_device_name": "麦克风 (USB2.0 Device)",
+      "output_device_name": "CABLE Input (VB-Audio Virtual Cable)",
+      "drain_seconds": 0.66,
+      "resume_capture_delay_seconds": 0.5,
+      "audio_api_latency_seconds": [
+        0.32,
+        0.48
+      ]
+    },
+    {
+      "received": 6866.9330021,
+      "event": "resumed",
+      "capture_delay_seconds": 0.5,
+      "id": 1
+    },
+    {
+      "received": 6870.2640872,
+      "event": "muted",
+      "drain_seconds": 0.66,
+      "id": 2
+    },
+    {
+      "received": 6870.5668778,
+      "event": "resumed",
+      "capture_delay_seconds": 0.5,
+      "id": 3
+    },
+    {
+      "received": 6873.0934324,
+      "event": "stopped",
+      "id": 4
+    }
+  ],
+  "exit_code": 0,
+  "wall_seconds": 20.207302400000117,
+  "mute_ack_seconds": 0.8305886999996801,
+  "declared_drain_seconds": 0.66,
+  "passed": true
+}

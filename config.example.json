@@ -1,0 +1,61 @@
+{
+  "slots": [
+    {
+      "path": "musics/[女 甜妹]哈喽哈喽.mp3",
+      "name": "甜妹哈喽"
+    },
+    {
+      "path": "musics/可惜兄弟.mp3",
+      "name": "可惜兄弟"
+    },
+    {
+      "path": "musics/好厉害啊哥哥.mp3",
+      "name": "好厉害啊哥哥"
+    },
+    {
+      "path": "musics/记住，全团.mp3",
+      "name": "记住，全团"
+    },
+    {
+      "path": "musics/可惜兄弟.mp3",
+      "name": "开吧开吧"
+    },
+    {
+      "path": "musics/雨爱.mp3",
+      "name": "雨爱"
+    },
+    {
+      "path": "musics/你他娘还真是个天才.mp3",
+      "name": "开吧开吧"
+    },
+    {
+      "path": "musics/M500000IpRVb2Whzhh.mp3",
+      "name": "鼓励"
+    },
+    {
+      "path": "musics/[女 甜妹]好的哥哥.mp3",
+      "name": "好的哥哥"
+    },
+    {
+      "path": "musics/千早爱音-2026-08-26-07-02-好厉害啊黑梦哥哥.mp3",
+      "name": "黑梦哥哥"
+    }
+  ],
+  "hotkeys": {
+    "wheel": "f8",
+    "stop": ";",
+    "ptt": "c"
+  },
+  "audio": {
+    "device": "CABLE Input",
+    "volume": 1.0,
+    "auto_ptt": true,
+    "loop": false
+  },
+  "voice": {
+    "enabled": false,
+    "reference": "musics/好厉害啊哥哥.mp3",
+    "input_name": "",
+    "hostapi": "Windows WASAPI"
+  }
+}

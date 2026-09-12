@@ -1,0 +1,173 @@
+{
+  "events": [
+    {
+      "seconds": 1.359,
+      "event": "state",
+      "state": "starting",
+      "message": "正在加载 GPU 变声模型…"
+    },
+    {
+      "seconds": 14.609,
+      "event": "ready",
+      "muted": true,
+      "input_device": 24,
+      "output_device": 22,
+      "input_device_name": "麦克风 (USB2.0 Device)",
+      "output_device_name": "CABLE Input (VB-Audio Virtual Cable)",
+      "drain_seconds": 0.66,
+      "resume_capture_delay_seconds": 0.5,
+      "audio_api_latency_seconds": [
+        0.32,
+        0.48
+      ]
+    },
+    {
+      "seconds": 14.687,
+      "event": "state",
+      "state": "running",
+      "message": "正在变声；播放预设音频时会自动暂停"
+    },
+    {
+      "seconds": 14.687,
+      "event": "resumed",
+      "capture_delay_seconds": 0.5,
+      "id": 1
+    },
+    {
+      "seconds": 14.734,
+      "event": "state",
+      "state": "running",
+      "message": "正在暂停变声，等待预设音频播放…"
+    },
+    {
+      "seconds": 15.5,
+      "event": "state",
+      "state": "muted",
+      "message": "预设音频播放期间，变声已暂停"
+    },
+    {
+      "seconds": 15.5,
+      "event": "muted",
+      "drain_seconds": 0.66,
+      "id": 2
+    },
+    {
+      "seconds": 18.406,
+      "event": "state",
+      "state": "running",
+      "message": "正在变声；播放预设音频时会自动暂停"
+    },
+    {
+      "seconds": 18.406,
+      "event": "resumed",
+      "capture_delay_seconds": 0.5,
+      "id": 3
+    },
+    {
+      "seconds": 18.453,
+      "event": "state",
+      "state": "running",
+      "message": "正在暂停变声，等待预设音频播放…"
+    },
+    {
+      "seconds": 19.234,
+      "event": "state",
+      "state": "muted",
+      "message": "预设音频播放期间，变声已暂停"
+    },
+    {
+      "seconds": 19.234,
+      "event": "muted",
+      "drain_seconds": 0.66,
+      "id": 4
+    },
+    {
+      "seconds": 22.312,
+      "event": "state",
+      "state": "running",
+      "message": "正在变声；播放预设音频时会自动暂停"
+    },
+    {
+      "seconds": 22.312,
+      "event": "resumed",
+      "capture_delay_seconds": 0.5,
+      "id": 5
+    },
+    {
+      "seconds": 22.359,
+      "event": "state",
+      "state": "running",
+      "message": "正在暂停变声，等待预设音频播放…"
+    },
+    {
+      "seconds": 23.093,
+      "event": "state",
+      "state": "muted",
+      "message": "预设音频播放期间，变声已暂停"
+    },
+    {
+      "seconds": 23.093,
+      "event": "muted",
+      "drain_seconds": 0.66,
+      "id": 6
+    },
+    {
+      "seconds": 23.14,
+      "event": "state",
+      "state": "running",
+      "message": "正在变声；播放预设音频时会自动暂停"
+    },
+    {
+      "seconds": 23.14,
+      "event": "resumed",
+      "capture_delay_seconds": 0.5,
+      "id": 7
+    },
+    {
+      "seconds": 23.187,
+      "event": "state",
+      "state": "stopping",
+      "message": "正在停止变声并释放显存…"
+    },
+    {
+      "seconds": 23.187,
+      "event": "stopped",
+      "id": 8
+    },
+    {
+      "seconds": 23.781,
+      "event": "process-exit",
+      "returncode": 0
+    },
+    {
+      "seconds": 24.453,
+      "event": "state",
+      "state": "stopped",
+      "message": "变声已停止，显存已释放"
+    },
+    {
+      "seconds": 24.453,
+      "event": "finished",
+      "returncode": 0
+    }
+  ],
+  "checks": [
+    "common CABLE output selected",
+    "voice enabled",
+    "CUDA voice ready through GUI controller",
+    "preset starts only after mute acknowledgement",
+    "preset and muted GUI status active",
+    "natural preset end resumes voice",
+    "preset starts only after mute acknowledgement",
+    "loop longer than clip stays muted",
+    "manual stop resumes voice",
+    "preset starts only after mute acknowledgement",
+    "rapid cancellation leaves final preset playing with muted voice",
+    "voice survives rapid cancellation",
+    "unchecking closes CUDA child"
+  ],
+  "failures": [],
+  "passed": true,
+  "seconds": 24.625,
+  "scope": "Real Tk app, CUDA subprocess, microphone/CABLE routing and pygame presets; no PTT sent; not a CS2 game test."
+}

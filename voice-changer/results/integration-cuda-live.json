@@ -1,0 +1,76 @@
+{
+  "gpu": "NVIDIA GeForce RTX 4060",
+  "torch": "2.5.1+cu121",
+  "reference": "E:\\Code\\MyProgram\\music2mic\\musics\\好厉害啊哥哥.mp3",
+  "reference_seconds": 1.724125,
+  "initialization_seconds": 5.519634000000224,
+  "with_speaker_model": {
+    "allocated_mib": 1376.71,
+    "reserved_mib": 1452.0,
+    "peak_allocated_mib": 1393.69,
+    "peak_reserved_mib": 1452.0
+  },
+  "after_releasing_speaker_model": {
+    "allocated_mib": 108.4,
+    "reserved_mib": 134.0,
+    "peak_allocated_mib": 1393.69,
+    "peak_reserved_mib": 1452.0
+  },
+  "model": "40ms_40ms",
+  "audio_chunk_ms": 160.0,
+  "ode_steps": 2,
+  "input_device": {
+    "name": "麦克风 (USB2.0 Device)",
+    "index": 24,
+    "hostapi": 2,
+    "max_input_channels": 2,
+    "max_output_channels": 0,
+    "default_low_input_latency": 0.003,
+    "default_low_output_latency": 0.0,
+    "default_high_input_latency": 0.01,
+    "default_high_output_latency": 0.0,
+    "default_samplerate": 48000.0
+  },
+  "output_device": {
+    "name": "CABLE Input (VB-Audio Virtual Cable)",
+    "index": 22,
+    "hostapi": 2,
+    "max_input_channels": 0,
+    "max_output_channels": 2,
+    "default_low_input_latency": 0.0,
+    "default_low_output_latency": 0.002,
+    "default_high_input_latency": 0.0,
+    "default_high_output_latency": 0.01,
+    "default_samplerate": 48000.0
+  },
+  "device_sample_rate": 48000,
+  "audio_api_latency_seconds": [
+    0.32,
+    0.48
+  ],
+  "chunks": 25,
+  "mean_processing_ms": 102.43662400000176,
+  "p95_processing_ms": 132.47831999997285,
+  "max_processing_ms": 134.6519000007902,
+  "chunks_over_deadline": 0,
+  "real_time_factor": 0.640228900000011,
+  "wall_seconds": 6.28848200000084,
+  "counters": {
+    "input_drops": 0,
+    "output_drops": 0,
+    "output_underflows": 0,
+    "startup_silence_callbacks": 10,
+    "callbacks": 38,
+    "muted_callbacks": 7,
+    "discarded_stale_results": 1,
+    "discarded_input_callbacks": 6
+  },
+  "faults": [],
+  "steady_cuda_memory": {
+    "allocated_mib": 117.24,
+    "reserved_mib": 134.0,
+    "peak_allocated_mib": 118.59,
+    "peak_reserved_mib": 134.0
+  },
+  "measurement_scope": "Live physical microphone to explicit output; no game/network latency measurement"
+}

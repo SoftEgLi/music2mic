@@ -1,0 +1,225 @@
+Music2Mic 验证记录
+==================
+项目路径: E:\Code\MyProgram\music2mic
+创建时间: 2026-08-26（全新项目，目录原先不存在，无既有文件被修改）
+
+一、创建文件清单与 SHA-256（创建基线，静态文件）
+E350DBF7ECDFFB0CA35966CA421CBAB90D798C68E1E65EA0181A90326BC5C60C  main.py
+5C45537B4D61332CD38379B60C88EF57EA2EA8C149C9EC861B800906AA7913A2  config.py
+CF63AAD61D9BD53B1D71119CDB1D657C0A574419352307E39785E9CDEEB99026  hotkeys.py
+E2223A1191F85A1942394682EE62210C92623E9DE1BB8F5406971FF8C5E6E608  ptt.py
+7BB2D6A87A150644F02CE6F7C3DA6A52404D01A2DCC71DCCBC343ACDF809B6D1  player.py
+D4F70EC14DA3B918033CEF00B53D40828441A2F087BA2C80FF6F74F7E6DCF227  wheel.py
+AE2DD03061A649776B97E5B7D0B64641E4B356F42C740CEF3EA4CD7FFC8B9D28  gui.py
+6D144D2674558CE09D68D7B9C107AB72B417B0B80B36F56311E143F863E30628  requirements.txt
+C2BEF26EA97640E30238BF0DCB99127B4E99DC48D8BFD36C2A2EC2B3600D6A17  launcher.bat
+474FF94A4BAD5A87C600DCE188541A7107F90B99C846CF4CEBD994FD0C360893  README.md
+64F384CB941FE0BEA5FEFA7A817D7E9069E88C58DA4882965E0FEEF265340325  ROLLBACK.ps1
+484AC74EFF2FF1ACA8BDC555F2C177C8D316F81BC106184654961541571F489E  config.json
+
+二、运行环境
+- 系统 Python 3.11.5（Anaconda，e:\anaconda3）
+- pygame 2.6.1（SDL 2.28.4）、pynput 1.8.2、tkinter 可用
+- 本机输出设备枚举: 扬声器 (Realtek High Definition Au...)、Realtek Digital Output、
+  H24T09P (NVIDIA High Definition...)
+
+三、测试记录
+1) 自检  python main.py --selftest
+   - 修正前（BASELINE）: 12 PASS / 1 FAIL
+     FAIL 项: "匹配 ; (VK)" —— 本机 pynput KeyCode.from_char(';') 返回 vk=None
+     根因: pynput 导入后为 user32.VkKeyScanW 设置 argtypes=[WCHAR]，传入 int 报
+           ctypes.ArgumentError
+   - 修正（MODIFIED）: hotkeys.py 改用 VkKeyScanW(char)（传单字符字符串），
+     parse_key 与 key_matches 均以该 VK 作回退匹配
+     结果: 13/13 PASS，EXIT=0
+2) GUI 冒烟（MODIFIED）: 构建 Music2MicApp、转盘 show/hide、退出
+   - 输出: WHEEL_SHOW_OK True / GUI_SMOKE_OK / exit 0
+3) 音频播放（MODIFIED）: 生成 440Hz 2s 正弦 WAV 播放至默认输出设备
+   - 输出: AUDIO_TEST PASS | busy=True | exit 0（0.6s 后 is_playing()=True）
+4) 回滚（ROLLBACK）: 复制项目至 %TEMP%\m2m_rollback_test_*，
+   运行 powershell -File ROLLBACK.ps1 -TargetDir <副本>
+   - 实际输出: "ROLLBACK 完成: 共检查 14 个文件，删除 14 个"；校验 14/14 文件不存在；
+     副本目录随后清理；原项目保留交付状态（副本内原有 musics 目录被保留，
+     ROLLBACK.ps1 只删除本项目创建的文件，不触碰用户数据）
+
+5) MP3 实机播放（MODIFIED）: 直接播放 musics\亮剑李云龙迷因梗特写素材 - 你他娘还真是个天才（原版高清）.mp3
+   - 输出: MP3 exists: True / MP3_TEST PASS | ok=True | busy=True / exit 0
+   （未改动 config.json，验证后仍为默认配置）
+四、交付状态
+- 主交付（MODIFIED_FILE）: main.py —— python main.py 启动界面，python main.py --selftest 自检
+- 依赖: pygame>=2.1.0、pynput>=1.7.6（requirements.txt）
+- 使用前置: 用户需自行安装 VB-CABLE Virtual Audio Cable（https://vb-audio.com/Cable/）
+- 运行: 双击 launcher.bat，或 cd music2mic 后 python main.py
+================================================================
+2026-08-26 第二轮验证：回到 VB-CABLE 方案（卸载 Voicemeeter Banana）
+一、环境变更
+1) 卸载 Voicemeeter Banana
+   winget uninstall --id VB-Audio.Voicemeeter.Banana -e --silent
+   -> 输出 "已成功卸载"，UNINSTALL_EXIT=0；winget list 确认已移除
+   -> 遗留: 安装目录与 VAIO 音频端点残留（官方要求卸载后重启清除），不影响使用
+2) 安装 VB-CABLE Virtual Audio Cable
+   官方 VBCABLE_Driver_Pack45.zip（1.29MB，https://vb-audio.com/Cable/）
+   VBCABLE_Setup_x64.exe /S -> SETUP_EXIT=0
+   验证: Render 出现 "CABLE Input"/"CABLE In 16ch"，Capture 出现 "CABLE Output"，
+         PnP MEDIA 设备 "VB-Audio Virtual Cable" 状态 OK
+二、改动文件与哈希
+1) MODIFIED_FILE: config.json
+   字段: audio.device: "" -> "CABLE Input"（插槽歌曲/快捷键/音量均未变）
+   原始 SHA256: 2BA1C878F8C9F6350EC8E58C3ECBC1B95402CECB8864B64D5576BA8EC5DACE39
+   新 SHA256:   1D9DA8702B9D977D52D25582E2A247ED65554379C9DA21545A7A0F6709C8F86F
+   备份: config.json.bak（内容与原始完全一致）
+2) MODIFIED_FILE: player.py（设备枚举/初始化 Bug 修复，详见 DIFF_FILE.txt）
+   原始 SHA256: 7BB2D6A87A150644F02CE6F7C3DA6A52404D01A2DCC71DCCBC343ACDF809B6D1
+   新 SHA256:   F405CE6A9F7A00DFF1C8505382F6C05632D9AB20951E911FA1948C5DE3447087
+3) README.md 追加"本机预设"说明
+   新 SHA256: 178EA2E58E0B70605533DECA28550F6BB2A6C5620E936BCE2D97758CF8431D34
+三、四件套（本轮改动）
+   MODIFIED_FILE : E:\Code\MyProgram\music2mic\config.json（+player.py）
+   DIFF_FILE     : E:\Code\MyProgram\music2mic\DIFF_FILE.txt
+   VERIFICATION  : E:\Code\MyProgram\music2mic\VERIFICATION.txt（本文件）
+   ROLLBACK      : E:\Code\MyProgram\music2mic\ROLLBACK.ps1（-RestoreConfig 模式）
+四、测试记录（命令 / 结果 / 退出码）
+1) BASELINE（改动前 config.json）: .venv\Scripts\python.exe main.py --selftest
+   -> 13/13 PASS，SELFTEST_EXIT=0
+2) MODIFIED（config.json device=CABLE Input 后）: 同上
+   -> 13/13 PASS，SELFTEST_EXIT=0
+3) 设备解析/初始化/实机播放（修复 player.py 后）
+   -> list_devices 含 'CABLE Input (VB-Audio Virtual Cable)'（完整名）
+   -> AudioPlayer init message: 音频已就绪（CABLE Input (VB-Audio Virtual Cable)）
+   -> play 亮剑李云龙...mp3: True | busy=True | TEST_EXIT=0
+4) ROLLBACK（副本测试）:
+   powershell -File ROLLBACK.ps1 -TargetDir <TEMP副本> -RestoreConfig
+   -> 输出: 配置已回滚 + 恢复后 SHA256: 2BA1C878F8C9F6350EC8E58C3ECBC1B95402CECB8864B64D5576BA8EC5DACE39
+   -> 与原始一致: True；真实目录 config.json 保持改动后状态（1D9DA870...）
+五、使用说明（当前方案）
+- Music2Mic 输出设备已预设 "CABLE Input"（音乐只进虚拟声卡，扬声器照常放游戏声音）
+- 游戏中语音输入选 "CABLE Output"（或 Windows 录制默认设备设为 CABLE Output）
+- 播放时软件自动按住 PTT（默认 V），停止键默认 ';'；界面可改插槽/快捷键/设备/音量
+- 想自己也听到音乐: Windows 声音设置->录制->CABLE Output->属性->侦听->勾选"侦听此设备"
+================================================================
+2026-08-26 第三轮：修复“扬声器无声”（系统默认播放设备被卸载残留占用）
+现象: 卸载 Voicemeeter 后扬声器无声（系统默认播放设备仍指向已失效的
+      Voicemeeter 虚拟端点）。
+处理:
+  1) 枚举 HKLM\...\MMDevices\Audio\Render，确认“扬声器”(Realtek, state=1) 可用；
+  2) 使用 nircmd setdefaultsounddevice 把默认播放设备设为“扬声器” -> EXIT=0；
+  3) 默认录制设备精确设为已启用的 USB2.0 麦克风
+     （{3a971e87-e9a5-46f4-a022-e2ef313c7d18}, state=1）-> EXIT=0；
+  4) 播放 440Hz 1.5s 测试音（winsound 走默认输出设备）。
+结果: 用户确认“现在可以听到扬声器的声音了”。
+备注: 残留的 Voicemeeter VAIO 端点（Voicemeeter In/Out A1-A5/B1-B3）在
+      重启 Windows 后由系统清除；当前默认播放=扬声器、默认录制=USB2.0 麦克风，
+      不受残留影响。
+================================================================
+2026-08-26 第四轮验证：修复 "mixer not initialized"
+1) 复现: 模拟 GUI 启动时序（AudioPlayer -> list_devices -> play）
+   - 修复前: list_devices 后 mixer 被 quit，play 报 "mixer not initialized"
+   - 修复后: 输出
+       AudioPlayer init: 音频已就绪（CABLE Input (VB-Audio Virtual Cable)）
+       list_devices 后 mixer 存活: True
+       play -> True | 播放中：... | busy=True
+       REGRESSION_EXIT=0
+2) 自检: python main.py --selftest -> 13/13 PASS，SELFTEST_EXIT=0
+3) 改动与哈希（详见 DIFF_FILE.txt）:
+   player.py -> 025B30580EE13B62611750D6A9A3C1EC037831D93F3E6BE7C0801CB5C18B64CD
+   gui.py    -> BF7357A2C04FEE4DDE3BA84010C7BDACAA83456FBAD4173DF9664C2AA541773A
+   launcher.bat -> 264FEEB52CA0615ADADF1377FC7AF5188E669980C3A630FBC9850EB7A38BAF37
+4) 使用提示: 若应用已打开，请关闭后重新启动（launcher.bat），再按播放测试。
+================================================================
+2026-08-26 第五轮验证：转盘鼠标偏差修复 + 插槽显示名称
+1) 转盘命中回归（WHEEL_TEST）: PASS
+   命令: .venv\Scripts\python.exe _test_wheel.py
+   输出: 扇区 0..5 中心角探针 hit 分别 = 0,1,2,3,4,5 全部 OK；
+         中心 -> -1；外部 -> None。
+2) 显示名称配置往返（CONFIG_TEST）: PASS
+   默认 name 为空；保存"鼓励/安慰"后读回一致；旧格式（无 name 键）配置加载后
+   自动补齐 name="" 且 path 保留、共 6 槽。
+3) GUI 冒烟（GUI_TEST）: PASS
+   临时配置目录中创建 Music2MicApp；在名称输入框写入"鼓励/安慰"后转盘显示名称
+   同步更新且已写入配置。
+4) 完整自检: python main.py --selftest -> 13/13 PASS，SELFTEST_EXIT=0。
+5) 使用提示: 界面每个插槽行最左侧的输入框填显示名称（可留空=自动用文件名）；
+   转盘鼠标指向与选中槽位已一一对应；重启应用后生效。
+================================================================
+2026-08-26 第六轮验证：转盘覆盖全屏游戏
+1) wheel.py 增加 _keep_top 周期性强制置顶（150ms），hide 后自动停止；
+2) README.md 常见问题更新（无边框窗口化 / 管理员运行）；
+3) 完整自检: python main.py --selftest -> 13/13 PASS，SELFTEST_EXIT=0；
+4) 用户已把游戏切换为全屏窗口模式，需重启 Music2Mic 后按 F8 验证；
+   若 F8 仍无反应，右键 launcher.bat -> 以管理员身份运行。
+================================================================
+2026-08-26 第七轮验证：F8 无反应修复
+1) 清理: 结束旧 pythonw 实例（避免多实例干扰全局热键监听）；
+2) launcher.bat 自动申请管理员权限（解决游戏管理员运行时普通权限收不到按键）；
+3) gui.py 热键监听状态检查 + 状态栏提示；
+4) 自检 13/13 PASS（SELFTEST_EXIT=0）；
+5) 用户确认: “现在好了”，F8 可正常呼出转盘。
+================================================================
+2026-08-26 第八轮验证：声音中断修复
+1) 循环播放实测: audio.loop=True 播放 1s 后 busy 仍为 True（循环持续播放）；
+   非循环播放 busy=True（歌曲未结束）。
+2) loop 配置往返: 默认 False，保存 True 后读回一致。
+3) GUI 冒烟: 勾选循环后配置已保存（临时配置），_poll 抗波动逻辑无异常。
+4) 完整自检: 13/13 PASS，SELFTEST_EXIT=0。
+5) 使用: 界面勾选“循环播放”即可单曲循环并持续按住说话键；停止键 ; 随时结束。
+================================================================
+2026-08-26 第九轮验证：launcher.bat 启动异常修复
+1) 应用启动: .venv\Scripts\python.exe main.py（真实配置）可正常运行，无崩溃；
+2) 管理员检测自测（当前非管理员会话）: 修正后退出码=1 -> 走提权分支；
+3) launcher.bat 重写: 可靠管理员检测 + 直接提权启动 pythonw（一次 UAC，无二次 CMD）；
+4) 用法: 双击 launcher.bat -> 若弹出 UAC 点“是” -> 图形界面出现；
+   之后每次都用它启动。
+================================================================
+2026-08-26 第十轮验证：10 槽转盘
+1) 转盘命中回归: 10 个扇区真实中心角探针 hit 全部 == 0..9，中心=-1，外部=None；
+   键盘 0 -> 槽位 9。
+2) 配置: 默认 10 槽；旧 6 槽配置加载后自动补到 10（保留槽 0-5 名称/路径，槽 6-9 为空）。
+3) GUI 冒烟: 界面 10 行插槽、转盘 10 槽。
+4) 完整自检: 13/13 PASS（“配置默认 10 插槽”），SELFTEST_EXIT=0。
+5) 使用: 重启应用（launcher.bat）后界面为 10 槽；原有 6 槽内容保留，新增 4 个空槽；
+   转盘键盘 1-9、0（0=第 10 槽）或点击选择。
+================================================================
+2026-09-12：CS2 转盘选歌后没有按住 C 的实机诊断与修复
+一、确认的根因
+1) 本机 Steam CS2，本地 de_dust2 地图，无在线队友；运行时 bind c 为 +voicerecord，
+   语音输入为 CABLE Output，配置正确。
+2) 旧版转盘可见时 GetForegroundWindow 仍属于 CS2（本次 PID 11040），
+   GetClipCursor 为 (960,540,961,541)，即鼠标被锁在屏幕中心的一个像素。
+   尝试移动到歌曲位置 (960,385) 后，实际位置仍是 (960,540)。点击命中中央停止，
+   数字键也未交给转盘，播放/PTT 流程根本没有执行。
+3) 直接在 CS2 前台发送 C 做对照：原虚拟键方式和扫描码方式都能亮起语音标识。
+   因此“CS2 不接受虚拟键”不是本机这次故障的根因；仅做桌面按键测试不足以确诊。
+4) 另修复选歌隐藏转盘后未恢复原窗口焦点的问题，避免把 C 发给播放器窗口。
+二、修复
+- wheel.py：打开转盘时激活原生顶层窗口；必要时临时 AttachThreadInput 后重试，
+  finally 中解除关联。激活失败时关闭转盘并提示，避免显示无法操作的菜单。
+  选歌时先恢复游戏前台再隐藏；确认恢复后播放，最多等待 0.5 秒，超时取消。
+- ptt.py：通过完整 Windows INPUT 结构发送扫描码并检查 SendInput 返回值；
+  发送失败明确返回错误，停止时释放实际按下的键，失败保留状态供重试。
+  ptt.log 仅记录本程序自己的 PTT 发送及其前台进程。
+- gui.py：每次选歌先释放旧 PTT 再按下新 PTT，包含重复选择同一首歌；
+  按键发送失败显示具体原因，不再无条件报告按住成功。
+三、验证
+1) .venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -q
+   -> 23 tests，OK。
+2) .venv\Scripts\python.exe main.py --selftest
+   -> 13/13 PASS，EXIT=0。
+3) .venv\Scripts\python.exe tests\gui_ptt_smoke.py
+   -> 前台为接收窗口，收到 ['down', 'up']，持续播放时 C 为按下状态，
+      停止后释放；GUI_PTT_SMOKE PASS，EXIT=0。
+4) Steam CS2 完整操作（普通权限启动播放器）
+   -> F8 后前台切到转盘，鼠标限制恢复为 (0,0,1920,1080)。
+   -> 鼠标点击歌曲、数字 6 选歌、重复选择数字 6：均切回 CS2，C 持续按下，
+      游戏左下角语音标识亮起；停止键 ; 后 C 松开、语音标识消失。
+5) 关闭测试实例后运行 launcher.bat，以日常管理员模式再次测试
+   -> keyboard selection: PASS / mouse selection: PASS / ADMIN_CS2_SMOKE PASS。
+   -> ptt.log 对应按下/松开均 sent=1、error=0、foreground_pid=11040。
+   -> 截图 .debug\admin_keyboard_held.jpg、.debug\admin_mouse_held.jpg 中左下角
+      显示语音标识；.debug\admin_stopped.jpg 中标识消失。
+   -> 本次验证覆盖游戏内语音激活和本地虚拟声卡播放，未验证远端队友听到的音频。
+四、测试后状态
+- 临时开启的 voice_loopback 已恢复 0，控制台回读 false。
+- 已 disconnect 退出本地测试地图并关闭控制台，CS2 留在主菜单。
+- launcher.bat 启动的最新版 Music2Mic 保持运行，音乐已停止，C 已释放。
+- 保留用户歌曲、插槽、C 键、CABLE Input 配置；临时文件清理被执行策略拒绝，
+  调试脚本与截图仍留在 .debug。脚本含本次进程 ID，仅供本次诊断记录，不应直接重跑。

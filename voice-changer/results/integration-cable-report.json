@@ -1,0 +1,89 @@
+{
+  "scope": "Real VoiceGate and WASAPI VB-CABLE capture; synthetic converter tones; real pygame preset",
+  "output_device": {
+    "name": "CABLE Input (VB-Audio Virtual Cable)",
+    "index": 22,
+    "hostapi": 2,
+    "max_input_channels": 0,
+    "max_output_channels": 2,
+    "default_low_input_latency": 0.0,
+    "default_low_output_latency": 0.002,
+    "default_high_input_latency": 0.0,
+    "default_high_output_latency": 0.01,
+    "default_samplerate": 48000.0
+  },
+  "capture_device": {
+    "name": "CABLE Output (VB-Audio Virtual Cable)",
+    "index": 23,
+    "hostapi": 2,
+    "max_input_channels": 2,
+    "max_output_channels": 0,
+    "default_low_input_latency": 0.003,
+    "default_low_output_latency": 0.0,
+    "default_high_input_latency": 0.01,
+    "default_high_output_latency": 0.0,
+    "default_samplerate": 48000.0
+  },
+  "output_latency_seconds": 0.32,
+  "capture_latency_seconds": 0.022,
+  "mute_ack_seconds_after_start": 2.589818800000103,
+  "drain_seconds": 0.5,
+  "stale_conversion_result_accepted": false,
+  "worker_failures": [],
+  "stream_statuses": [],
+  "counters": {
+    "input_drops": 0,
+    "output_drops": 0,
+    "output_underflows": 0,
+    "startup_silence_callbacks": 3,
+    "callbacks": 51,
+    "muted_callbacks": 21,
+    "discarded_stale_results": 1,
+    "discarded_input_callbacks": 1
+  },
+  "measurements": {
+    "before": {
+      "seconds": 0.898375,
+      "rms": 0.08486977219581604,
+      "tone_440_amplitude": 0.11847305330412755,
+      "tone_660_amplitude": 0.0008526296819651686,
+      "tone_880_amplitude": 0.00039944452105939473,
+      "tone_1320_amplitude": 5.036795179268088e-05
+    },
+    "preset_start": {
+      "seconds": 0.24908333333333332,
+      "rms": 0.060075338929891586,
+      "tone_440_amplitude": 0.0003274132378009113,
+      "tone_660_amplitude": 0.0005770678690749582,
+      "tone_880_amplitude": 0.000803175605180885,
+      "tone_1320_amplitude": 0.07967177544825112
+    },
+    "preset": {
+      "seconds": 1.5556875,
+      "rms": 0.08416209369897842,
+      "tone_440_amplitude": 0.00011103926753739779,
+      "tone_660_amplitude": 0.00012479268932149136,
+      "tone_880_amplitude": 0.00036164142775576804,
+      "tone_1320_amplitude": 0.11801510395237036
+    },
+    "resumed": {
+      "seconds": 0.999125,
+      "rms": 0.08484353125095367,
+      "tone_440_amplitude": 0.00032379651363421253,
+      "tone_660_amplitude": 0.00042038026950697786,
+      "tone_880_amplitude": 0.1181211280336978,
+      "tone_1320_amplitude": 0.0004970679077505097
+    }
+  },
+  "checks": {
+    "conversion_audible_before_preset": true,
+    "preset_audible": true,
+    "no_old_voice_at_preset_start": true,
+    "no_conversion_during_preset": true,
+    "fresh_conversion_audible_after_resume": true,
+    "no_queued_speech_after_resume": true,
+    "inflight_old_result_rejected": true,
+    "worker_ok": true
+  },
+  "passed": true
+}

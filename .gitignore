@@ -1,0 +1,40 @@
+# Local environments, package caches and editor state
+.venv/
+.cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.vscode/
+.idea/
+.agents/
+.codex/
+.debug/
+work/
+.publish/
+.env
+.env.*
+!.env.example
+
+# Machine-specific settings and runtime output
+/config.json
+*.bak
+*.log
+*.log.*
+/voice-changer/reports/
+/voice-changer/results/*
+!/voice-changer/results/integration-cable-report.json
+!/voice-changer/results/integration-cuda-ipc-report.json
+!/voice-changer/results/integration-cuda-live.json
+!/voice-changer/results/integration-gui-report.json
+/voice-changer/samples/active_*.wav
+
+# Historical investigation artifacts and unused Voicemeeter checkouts
+/voicemeeter-api-python/
+/voicemeeter-sdk/
+/DIFF_FILE.txt
+/ROLLBACK.ps1
+/1（用
+
+# Model weights and musics/ are intentionally INCLUDED and tracked with LFS.

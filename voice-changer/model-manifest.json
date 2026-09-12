@@ -1,0 +1,36 @@
+{
+  "huggingface_revision": "39cdd19522fe896c227da691314d9a0e3b995486",
+  "files": [
+    {
+      "file": "ckpts/vocos/vocos.pt",
+      "url": "https://huggingface.co/ASLP-lab/MeanVC2/resolve/39cdd19522fe896c227da691314d9a0e3b995486/vocos.pt?download=true",
+      "bytes": 33223674,
+      "sha256": "df1f2ba9f7ac35c96832579421ee1ed913a68c3a1d2f8a6536739f902f194a93"
+    },
+    {
+      "file": "ckpts/pretrained_models/meanvc2_40ms_40ms.safetensors",
+      "url": "https://huggingface.co/ASLP-lab/MeanVC2/resolve/39cdd19522fe896c227da691314d9a0e3b995486/meanvc2_40ms_40ms.safetensors?download=true",
+      "bytes": 70839448,
+      "sha256": "01caafec9a3991a5514df9412952d24ae3370406358a01e20e03df41f2f5d515"
+    },
+    {
+      "file": "preprocess/ckpts/fastu2pp_80ms.pt",
+      "url": "https://huggingface.co/ASLP-lab/MeanVC2/resolve/39cdd19522fe896c227da691314d9a0e3b995486/fastu2pp_80ms.pt?download=true",
+      "bytes": 246292087,
+      "sha256": "4338739bd13e0f7718276373e9547ce1f9aa02ec0867452860df9e837f90e4d2"
+    },
+    {
+      "file": "preprocess/ckpts/wavlm_large_finetune.pth",
+      "url": "https://drive.usercontent.google.com/download?id=1-aE1NfzpRCLxA4GUxX9ITI3F9LlbtEGP&export=download&confirm=t",
+      "bytes": 1301926579,
+      "sha256": "51f07e3b94d9e0262a6a675ef5a087be3dd09e8c62e9d886827f44f82fe7f94b"
+    },
+    {
+      "file": "preprocess/ckpts/wavlm_large.pt",
+      "url": "https://huggingface.co/s3prl/converted_ckpts/resolve/main/wavlm_large.pt?download=true",
+      "bytes": 1261965425,
+      "sha256": "6fb4b3c3e6aa567f0a997b30855859cb81528ee8078802af439f7b2da0bf100f"
+    }
+  ],
+  "errors": []
+}

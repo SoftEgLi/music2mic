@@ -1,0 +1,16 @@
+# Install torch==2.5.1 and torchaudio==2.5.1 from the official cu121 index first.
+# This file contains runtime support packages; training/evaluation stacks are omitted.
+numpy==1.26.4
+soundfile>=0.12
+sounddevice>=0.5
+scipy>=1.11
+librosa>=0.10
+safetensors>=0.4
+einops==0.8.0
+x-transformers==2.2.11
+omegaconf==2.3.0
+requests>=2.31
+packaging>=23
+tqdm>=4.66
+PyYAML>=6.0
+# Install s3prl separately with --no-deps; only its WavLM upstream is used.
