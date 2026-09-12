@@ -3,7 +3,9 @@
 import json
 from pathlib import Path, PureWindowsPath
 
-CONFIG_PATH = Path(__file__).resolve().parent / "config.json"
+from app_paths import app_root
+
+CONFIG_PATH = app_root() / "config.json"
 
 SLOT_COUNT = 10
 
@@ -22,7 +24,7 @@ DEFAULT_CONFIG = {
     },
     "voice": {
         "enabled": False,
-        "reference": str(Path(__file__).resolve().parent / "musics" / "好厉害啊哥哥.mp3"),
+        "reference": str(app_root() / "musics" / "好厉害啊哥哥.mp3"),
         "input_name": "",
         "hostapi": "Windows WASAPI",
     },

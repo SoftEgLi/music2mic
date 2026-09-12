@@ -8,6 +8,18 @@
 - 图形界面可编辑插槽（含每个插槽的显示名称，如“鼓励”“安慰”）、快捷键、输出设备、音量。
 - “实时变声”页可开启 GPU 音色转换；播放预设期间自动静音变声，结束后恢复。
 
+## Windows 安装版（推荐）
+
+从 [GitHub Releases](https://github.com/SoftEgLi/music2mic/releases/latest) 下载同一版本的 **Setup.exe 和全部同名 `.bin` 文件**，放在同一个文件夹里，双击 Setup.exe 安装。`.bin` 是安装数据卷，不能单独运行，也不能漏下载。
+
+安装版内置 Python、PyTorch/CUDA 运行库、全部预设音频和当前变声模型，**不用创建虚拟环境或执行 pip**。安装完成后使用开始菜单或安装目录里的 `Music2Mic.exe`；不要把这个 EXE 单独移出安装目录，音频、模型和运行时是配套文件。
+
+支持 Windows 10/11 x64。GPU 变声仍需要 NVIDIA 显卡和可用的 NVIDIA 驱动。安装器会在缺少微软 VC++ 运行库时安装随附的官方程序；最后一页可选打开 VB-CABLE 官方驱动安装程序，已经安装过则无需重复安装。首次安装虚拟声卡可能需要重启。
+
+程序正常启动会请求管理员权限，以保持与 `launcher.bat` 的游戏快捷键行为一致。普通权限运行可使用 `Music2Mic.exe --no-admin`。在实时变声页选择实体麦克风，游戏输入选 **CABLE Output**，再启用变声即可。
+
+源码运行方法和重新打包说明分别见下文及 [packaging/README.md](packaging/README.md)。
+
 ## 原理
 
 1. 安装免费虚拟声卡 **VB-CABLE Virtual Audio Cable**：https://vb-audio.com/Cable/

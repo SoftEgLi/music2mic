@@ -1,0 +1,34 @@
+Music2Mic for Windows x64
+
+This package includes the application, its Python and CUDA runtime, and the
+voice-conversion models. You do not need to install Python or Python packages.
+GPU voice conversion needs a compatible NVIDIA GPU and NVIDIA graphics driver.
+The NVIDIA graphics driver is not included and is not installed by this setup.
+
+If the Microsoft Visual C++ x64 runtime is missing or older than the included
+Microsoft package, Setup opens that original prerequisite installer with an
+administrator prompt. A sufficient installed runtime is left in place. The
+Microsoft package and its license terms remain Microsoft's own.
+
+Music2Mic installs for the current user under Local AppData by default. Existing
+Music2Mic configuration is retained when installing an update.
+
+VB-CABLE attribution and optional driver installation
+
+VB-CABLE is made by VB-Audio Software and is a separate product from Music2Mic.
+Official source: https://vb-cable.com/ (https://vb-audio.com/Cable/)
+VB-CABLE is donationware; all participation and donations are welcome.
+If you find it useful, please support VB-Audio or obtain your license through
+its official website: https://vb-audio.com/Services/licensing.htm
+
+When the original basic VB-CABLE package is included, the final page offers an
+unchecked option to open its original interactive installer. Installing that
+driver requires administrator access, and its installer may request a restart.
+You can skip it if VB-CABLE is already installed. No VB-CABLE A+B or C+D driver
+is included. Music2Mic Setup does not change default Windows audio routes.
+
+After installing the driver, select CABLE Input as the Music2Mic output and
+CABLE Output as the game's microphone input. Use headphones for local preview.
+
+Third-party source, models, runtime packages, and audio retain their respective
+terms; see THIRD_PARTY_NOTICES.md in the installed application directory.

@@ -39,9 +39,11 @@ every upstream component. Consult the original repositories, model cards, and
 their terms for the applicable model conditions. This repository does not claim
 that all listed checkpoints have the same license or relicense these files.
 
-The runtime also uses separately installed packages, including PyTorch,
-torchaudio, and s3prl. Their installed environments are excluded from this
-repository, and those packages retain their respective licenses.
+The runtime also uses Python, PyTorch, torchaudio, s3prl, and other packages.
+Development environments are excluded from the source repository. Windows
+release installers include a portable Python runtime and these dependencies;
+their bundled license files and package metadata are retained under
+`voice-changer/runtime/`, and all packages retain their respective licenses.
 
 ## Supplied audio
 
@@ -53,6 +55,14 @@ in this repository is intended to relicense the audio.
 
 ## External audio driver
 
-[VB-AUDIO Virtual Cable](https://vb-audio.com/Cable/) is installed separately.
-Its driver is not included in this repository and remains subject to its own
-terms.
+[VB-AUDIO Virtual Cable](https://vb-audio.com/Cable/) is a separate product by
+VB-Audio Software. Windows release installers include the original BASIC
+VB-CABLE driver package as an optional interactive installation, in accordance
+with its [distribution conditions](https://vb-audio.com/Services/licensing.htm).
+VB-CABLE is donationware; participation and donations are welcome through its
+official site. The A+B and C+D products are not included. Driver binaries are
+not checked into this source repository, and retain their original terms.
+
+Windows releases also include Microsoft's original signed Visual C++ x64
+Redistributable installer as a prerequisite. Its license terms remain
+Microsoft's own. The NVIDIA graphics driver is not included.

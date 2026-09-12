@@ -1,0 +1,121 @@
+; Build a prepared, self-contained dist\Music2Mic directory with Inno Setup 7.
+; Example: ISCC.exe --define=MyAppVersion=0.1.0 packaging\Music2Mic.iss
+; Upload the resulting Setup.exe AND every Setup-*.bin to the same release.
+; Users put all of these files in one directory and run Setup.exe.
+; DiskSliceSize stays below GitHub's 2 GiB per-release-asset limit.
+
+#ifndef MyAppVersion
+  #define MyAppVersion "0.1.0"
+#endif
+#ifndef AppSourceDir
+  #define AppSourceDir AddBackslash(SourcePath) + "..\dist\Music2Mic"
+#endif
+#ifndef InstallerOutputDir
+  #define InstallerOutputDir AddBackslash(SourcePath) + "..\dist\installer"
+#endif
+; Read the verified Microsoft package version, avoiding a stale hard-coded
+; runtime minimum. A missing redistributable makes preprocessing fail.
+#define VCRuntimeVersion GetVersionNumbersString(AddBackslash(AppSourceDir) + "drivers\VC_redist.x64.exe")
+
+[Setup]
+AppId={{E9976A21-14CE-4C1E-A1C9-97A5CE7A8C65}
+AppName=Music2Mic
+AppVersion={#MyAppVersion}
+AppPublisher=SoftEgLi
+AppPublisherURL=https://github.com/SoftEgLi/music2mic
+AppSupportURL=https://github.com/SoftEgLi/music2mic/issues
+AppUpdatesURL=https://github.com/SoftEgLi/music2mic/releases
+DefaultDirName={localappdata}\Programs\Music2Mic
+DefaultGroupName=Music2Mic
+DisableProgramGroupPage=yes
+PrivilegesRequired=lowest
+ArchitecturesAllowed=x64os
+ArchitecturesInstallIn64BitMode=x64os
+MinVersion=10.0
+SourceDir={#AppSourceDir}
+OutputDir={#InstallerOutputDir}
+OutputBaseFilename=Music2Mic-{#MyAppVersion}-Windows-x64-Setup
+UninstallDisplayIcon={app}\Music2Mic.exe
+WizardStyle=modern
+InfoBeforeFile={#AddBackslash(SourcePath)}InstallerInfo.txt
+Compression=lzma2/normal
+SolidCompression=no
+DiskSpanning=yes
+DiskSliceSize=1900000000
+SlicesPerDisk=1
+CloseApplications=yes
+RestartApplications=no
+SetupLogging=yes
+
+[Tasks]
+Name: "desktopicon"; Description: "Create a desktop shortcut"; Flags: unchecked
+
+[Files]
+; Explicit entry makes a missing GUI executable a compile error.
+Source: "Music2Mic.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Keep all packaged runtime/model paths unchanged. Exclude only root config.
+Source: "*"; DestDir: "{app}"; Excludes: "\Music2Mic.exe,\config.json"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Supply defaults once; retain user settings on updates and uninstall.
+Source: "config.example.json"; DestDir: "{app}"; DestName: "config.json"; Flags: onlyifdoesntexist uninsneveruninstall
+
+[Icons]
+Name: "{group}\Music2Mic"; Filename: "{app}\Music2Mic.exe"; WorkingDir: "{app}"
+Name: "{autodesktop}\Music2Mic"; Filename: "{app}\Music2Mic.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+
+[Run]
+; Install the native dependency only if no sufficient x64 runtime is present.
+; /quiet is Microsoft's own supported UI mode; elevation still prompts via UAC.
+Filename: "{app}\drivers\VC_redist.x64.exe"; Parameters: "/install /quiet /norestart"; WorkingDir: "{app}\drivers"; Verb: "runas"; StatusMsg: "Installing the Microsoft Visual C++ runtime..."; Flags: shellexec waituntilterminated; Check: NeedsVCRuntime; AfterInstall: VerifyVCRuntime
+; The original BASIC driver package is optional. Its own installer remains
+; interactive; this unchecked action neither installs silently nor changes
+; the user's default Windows recording/playback routes.
+Filename: "{app}\drivers\VBCABLE\VBCABLE_Setup_x64.exe"; WorkingDir: "{app}\drivers\VBCABLE"; Verb: "runas"; Description: "Open VB-Audio's VB-CABLE driver setup (optional; administrator access required)"; Flags: postinstall shellexec waituntilterminated skipifsilent unchecked; Check: HasBundledVBCable
+Filename: "https://vb-audio.com/Cable/"; Description: "Open the official VB-CABLE download page (if not installed)"; Flags: postinstall shellexec skipifsilent unchecked; Check: not HasBundledVBCable
+; Shell launch lets Windows handle elevation if the app manifest requests it.
+Filename: "{app}\Music2Mic.exe"; WorkingDir: "{app}"; Description: "Launch Music2Mic"; Flags: postinstall shellexec skipifsilent unchecked
+
+[Code]
+function VCRuntimeMeetsMinimum(const RootKey: HKEY): Boolean;
+var
+  Installed: Cardinal;
+  VersionText: String;
+  InstalledVersion, RequiredVersion: Int64;
+begin
+  Result := False;
+  if not RegQueryDWordValue(RootKey,
+    'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Installed', Installed) then
+    Exit;
+  if Installed <> 1 then
+    Exit;
+  if not RegQueryStringValue(RootKey,
+    'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Version', VersionText) then
+    Exit;
+  if (Copy(VersionText, 1, 1) = 'v') or (Copy(VersionText, 1, 1) = 'V') then
+    Delete(VersionText, 1, 1);
+  if not StrToVersion(VersionText, InstalledVersion) then
+    Exit;
+  if not StrToVersion('{#VCRuntimeVersion}', RequiredVersion) then
+    RaiseException('The packaged Microsoft runtime version is invalid.');
+  Result := ComparePackedVersion(InstalledVersion, RequiredVersion) >= 0;
+end;
+
+function NeedsVCRuntime: Boolean;
+begin
+  Result := not (VCRuntimeMeetsMinimum(HKLM64) or VCRuntimeMeetsMinimum(HKLM32));
+  if Result then
+    Log('A Microsoft Visual C++ x64 runtime installation is required.')
+  else
+    Log('A sufficient Microsoft Visual C++ x64 runtime is already installed; skipping.');
+end;
+
+procedure VerifyVCRuntime;
+begin
+  if NeedsVCRuntime then
+    RaiseException('The Microsoft Visual C++ runtime installation did not complete. ' +
+      'Run drivers\VC_redist.x64.exe from the application folder and retry.');
+end;
+
+function HasBundledVBCable: Boolean;
+begin
+  Result := FileExists(ExpandConstant('{app}\drivers\VBCABLE\VBCABLE_Setup_x64.exe'));
+end;

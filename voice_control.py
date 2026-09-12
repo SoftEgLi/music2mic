@@ -9,16 +9,74 @@ preset may start. No audio or machine-learning packages are imported here.
 from __future__ import annotations
 
 from datetime import datetime
+import ctypes
+from ctypes import wintypes
 import json
+import ntpath
 import os
 from pathlib import Path
 import queue
 import subprocess
+import sys
 import threading
 import time
 
+from app_paths import app_root
+
 
 EVENT_PREFIX = "M2M_EVENT "
+_DLL_DIRECTORY_LOCK = threading.Lock()
+
+
+def _get_windows_dll_directory():
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    getter = kernel32.GetDllDirectoryW
+    getter.argtypes = [wintypes.DWORD, wintypes.LPWSTR]
+    getter.restype = wintypes.DWORD
+    buffer = ctypes.create_unicode_buffer(32768)
+    ctypes.set_last_error(0)
+    length = getter(len(buffer), buffer)
+    if not length and ctypes.get_last_error():
+        raise ctypes.WinError(ctypes.get_last_error())
+    if length >= len(buffer):
+        raise OSError("DLL search directory exceeds the supported Windows path length")
+    return buffer.value or None
+
+
+def _set_windows_dll_directory(directory):
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    setter = kernel32.SetDllDirectoryW
+    setter.argtypes = [wintypes.LPCWSTR]
+    setter.restype = wintypes.BOOL
+    if not setter(directory):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def _backend_environment():
+    """Keep the portable Python child independent of the frozen GUI's imports."""
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUNBUFFERED"] = "1"
+    env["PYTHONUTF8"] = "1"
+    if getattr(sys, "frozen", False) and sys.platform == "win32":
+        bundle_directory = getattr(sys, "_MEIPASS", None)
+
+        def bundled_path(entry):
+            if not entry.strip() or not bundle_directory:
+                return False
+            path = ntpath.normcase(ntpath.abspath(ntpath.expandvars(entry.strip().strip('"'))))
+            bundle = ntpath.normcase(ntpath.abspath(str(bundle_directory)))
+            try:
+                return ntpath.commonpath((path, bundle)) == bundle
+            except ValueError:
+                return False  # Different drive, therefore outside the bundle.
+
+        for name in tuple(env):
+            if name.upper() in ("PYTHONHOME", "PYTHONPATH"):
+                del env[name]
+            elif name.upper() == "PATH":
+                env[name] = ";".join(entry for entry in env[name].split(";") if not bundled_path(entry))
+    return env
 
 
 def preferred_devices(devices):
@@ -51,9 +109,11 @@ class VoiceController:
 
     def __init__(self, root_dir=None, *, python_executable=None,
                  command_timeout=4.0, stop_timeout=3.0, exit_drain_seconds=0.3):
-        self.root = Path(root_dir) if root_dir else Path(__file__).resolve().parent
+        self.root = Path(root_dir) if root_dir is not None else app_root()
         self.voice_root = self.root / "voice-changer"
+        portable_python = self.voice_root / "runtime" / "python.exe"
         self.python = Path(python_executable) if python_executable else (
+            portable_python if portable_python.is_file() else
             self.voice_root / ".venv" / "Scripts" / "python.exe")
         self.runner = self.voice_root / "tools" / "run_voice_changer.py"
         self.probe = self.voice_root / "tools" / "probe_audio.py"
@@ -106,15 +166,34 @@ class VoiceController:
 
     @staticmethod
     def _popen(command, cwd):
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        env["PYTHONUNBUFFERED"] = "1"
-        env["PYTHONUTF8"] = "1"
-        return subprocess.Popen(command, cwd=str(cwd), env=env,
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, encoding="utf-8",
-                                errors="replace", bufsize=1,
-                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        options = dict(cwd=str(cwd), env=_backend_environment(),
+                       stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT, encoding="utf-8",
+                       errors="replace", bufsize=1,
+                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        if not (getattr(sys, "frozen", False) and sys.platform == "win32"):
+            return subprocess.Popen(command, **options)
+        # PyInstaller's DLL directory is inherited by external programs. Reset
+        # only while creating our portable Python child, then restore the GUI.
+        # https://pyinstaller.org/en/stable/common-issues-and-pitfalls.html#windows
+        # The directory is process-wide; device discovery also launches on a
+        # worker thread, so all our child launches share this lock.
+        with _DLL_DIRECTORY_LOCK:
+            previous = _get_windows_dll_directory()
+            _set_windows_dll_directory(None)
+            process = None
+            try:
+                process = subprocess.Popen(command, **options)
+                return process
+            finally:
+                try:
+                    _set_windows_dll_directory(previous)
+                except OSError:
+                    # Do not lose ownership of a child if restoring the GUI's
+                    # directory fails after CreateProcess already succeeded.
+                    if process is not None:
+                        VoiceController._terminate_and_wait(process)
+                    raise
 
     def discover_devices(self, callback=None):
         """Read device metadata off-thread; callback receives (devices, error)."""
@@ -126,7 +205,7 @@ class VoiceController:
         def discover():
             process = None
             try:
-                process = self._popen([str(self.python), "-u", str(self.probe), "list-devices"],
+                process = self._popen([str(self.python), "-X", "utf8", "-u", str(self.probe), "list-devices"],
                                       self.voice_root)
                 with self._probe_lock:
                     self._probe_process = process
@@ -177,7 +256,7 @@ class VoiceController:
             session = self.voice_root / "reports" / (
                 "launcher-" + datetime.now().strftime("%Y%m%d-%H%M%S-%f"))
             session.mkdir(parents=True, exist_ok=True)
-            command = [str(self.python), "-u", str(self.runner), "live",
+            command = [str(self.python), "-X", "utf8", "-u", str(self.runner), "live",
                        "--reference", str(reference),
                        "--input-device", str(input_device["index"]),
                        "--output-device", str(output_device["index"]),

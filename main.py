@@ -9,6 +9,8 @@ import os
 import sys
 import tempfile
 
+from app_paths import app_root
+
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -85,6 +87,60 @@ def selftest():
     sys.exit(0 if ok else 1)
 
 
+def prepare_runtime():
+    """Keep a frozen launch's working files beside its EXE, not its extraction."""
+    if getattr(sys, "frozen", False):
+        from multiprocessing import freeze_support
+        freeze_support()
+        os.chdir(app_root())
+
+
+def relaunch_as_admin(arguments):
+    """Match launcher.bat's normal elevation while leaving QA noninteractive."""
+    if (not getattr(sys, "frozen", False) or sys.platform != "win32"
+            or any(flag in arguments for flag in ("--no-admin", "--selftest", "--release-smoke-report"))):
+        return False
+    import ctypes
+    from ctypes import wintypes
+    import subprocess
+
+    shell32 = ctypes.WinDLL("shell32", use_last_error=True)
+    is_admin = shell32.IsUserAnAdmin
+    is_admin.argtypes = []
+    is_admin.restype = wintypes.BOOL
+    if is_admin():
+        return False
+    execute = shell32.ShellExecuteW
+    execute.argtypes = [wintypes.HWND, wintypes.LPCWSTR, wintypes.LPCWSTR,
+                       wintypes.LPCWSTR, wintypes.LPCWSTR, ctypes.c_int]
+    execute.restype = ctypes.c_ssize_t
+    # The elevated one-file EXE must unpack its own runtime because this parent
+    # exits immediately and its temporary bundle will be removed.
+    previous_reset = os.environ.get("PYINSTALLER_RESET_ENVIRONMENT")
+    os.environ["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    try:
+        result = execute(None, "runas", sys.executable, subprocess.list2cmdline(arguments),
+                         str(app_root()), 1)
+    finally:
+        if previous_reset is None:
+            os.environ.pop("PYINSTALLER_RESET_ENVIRONMENT", None)
+        else:
+            os.environ["PYINSTALLER_RESET_ENVIRONMENT"] = previous_reset
+    if result <= 32:
+        raise OSError(result, "未能以管理员身份启动。请允许权限提示，或使用 --no-admin 以普通权限打开。")
+    return True
+
+
+def _show_startup_error(message):
+    import ctypes
+    from ctypes import wintypes
+
+    show = ctypes.WinDLL("user32", use_last_error=True).MessageBoxW
+    show.argtypes = [wintypes.HWND, wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.UINT]
+    show.restype = ctypes.c_int
+    show(None, message, "Music2Mic 启动失败", 0x10)
+
+
 def main():
     from config import load_config
     from gui import Music2MicApp
@@ -94,8 +150,28 @@ def main():
     app.mainloop()
 
 
-if __name__ == "__main__":
-    if "--selftest" in sys.argv:
+def entrypoint(arguments=None):
+    arguments = list(sys.argv[1:] if arguments is None else arguments)
+    prepare_runtime()
+    if "--release-smoke-report" in arguments:
+        index = arguments.index("--release-smoke-report")
+        if index + 1 >= len(arguments) or arguments[index + 1].startswith("--"):
+            _show_startup_error("--release-smoke-report 后需要指定报告文件路径。")
+            return 2
+        from release_smoke import run_smoke
+        return run_smoke(arguments[index + 1])
+    if "--selftest" in arguments:
         selftest()
-    else:
-        main()
+        return 0
+    try:
+        if relaunch_as_admin(arguments):
+            return 0
+    except OSError as exc:
+        _show_startup_error(str(exc))
+        return 1
+    main()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(entrypoint())

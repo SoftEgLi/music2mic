@@ -4,13 +4,13 @@ import ctypes
 from ctypes import wintypes
 import logging
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 
 from pynput import keyboard
 
 from hotkeys import parse_key
+from app_paths import app_root
 
-LOG_PATH = Path(__file__).resolve().with_name("ptt.log")
+LOG_PATH = app_root() / "ptt.log"
 
 
 class _KEYBDINPUT(ctypes.Structure):
