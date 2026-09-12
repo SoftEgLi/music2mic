@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import os
 from pathlib import Path
@@ -52,9 +53,12 @@ def download(url, destination):
 def verify_signature(path, publisher):
     # Pass the path through an environment variable, never interpolate shell code.
     env = dict(os.environ, M2M_SIGNATURE_FILE=str(path))
+    # PowerShell 7's inherited module paths cannot be loaded by Windows PS 5.1.
+    env = {key: value for key, value in env.items() if key.upper() != 'PSMODULEPATH'}
     command = '$s = Get-AuthenticodeSignature -LiteralPath $env:M2M_SIGNATURE_FILE; '
     command += '[pscustomobject]@{Status=$s.Status.ToString();Publisher=$s.SignerCertificate.Subject} | ConvertTo-Json -Compress'
-    value = json.loads(subprocess.check_output(['powershell', '-NoProfile', '-Command', command], env=env))
+    powershell = Path(env.get('SystemRoot', r'C:\Windows')) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
+    value = json.loads(subprocess.check_output([str(powershell), '-NoProfile', '-Command', command], env=env))
     if value['Status'] != 'Valid' or publisher.lower() not in value['Publisher'].lower():
         raise RuntimeError(f'Unexpected signature for {path.name}: {value}')
     return value
@@ -98,6 +102,34 @@ def stage_payload():
     return len(files)
 
 
+def stage_gui_licenses():
+    licenses = APP / 'licenses' / 'gui'
+    for distribution in importlib.metadata.distributions():
+        for relative in distribution.files or ():
+            if '.dist-info' not in relative.as_posix():
+                continue
+            if relative.name.upper().startswith(('LICENSE', 'COPYING', 'NOTICE')):
+                source = Path(distribution.locate_file(relative))
+                if source.is_file():
+                    stage(source, licenses / relative.as_posix())
+    import pygame
+    pygame_license = Path(pygame.__file__).parent / 'docs/generated/LGPL.txt'
+    if not pygame_license.is_file():
+        raise RuntimeError('The pygame LGPL license must accompany the release')
+    stage(pygame_license, licenses / 'pygame/LGPL.txt')
+    base = Path(sys.base_prefix)
+    for name in ('LICENSE_PYTHON.txt', 'Library/lib/tk8.6/license.terms'):
+        source = base / name
+        if source.is_file():
+            stage(source, licenses / 'python-and-tk' / name)
+    # Conda's native libffi/Tcl packages keep license texts in their package
+    # metadata, separately from the runtime DLL and data locations.
+    for pattern in ('libffi-*/info/licenses/*', 'tk-*/info/licenses/*/license.terms'):
+        for source in (base / 'pkgs').glob(pattern):
+            if source.is_file():
+                stage(source, licenses / 'native' / source.relative_to(base / 'pkgs'))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--skip-gui', action='store_true')
@@ -106,14 +138,22 @@ def main():
     args = parser.parse_args()
     APP.mkdir(parents=True, exist_ok=True)
     files = stage_payload()
+    stage_gui_licenses()
     signatures = prerequisites()
     if not args.skip_gui:
+        # A venv created from Conda may not expose these DLLs to PyInstaller's
+        # dependency resolver, although _ctypes and Tk require them at runtime.
+        native_dependencies = []
+        for name in ('ffi.dll', 'tk86t.dll', 'tcl86t.dll'):
+            dependency = Path(sys.base_prefix) / 'Library' / 'bin' / name
+            if dependency.is_file():
+                native_dependencies += ['--add-binary', str(dependency) + os.pathsep + '.']
         run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--onefile', '--windowed',
              '--name', 'Music2Mic', '--distpath', APP, '--workpath', ROOT / 'work/build-gui',
              '--specpath', ROOT / 'work', '--hidden-import', 'pygame._sdl2.audio',
              '--hidden-import', 'pynput.keyboard._win32', '--hidden-import', 'pynput.mouse._win32',
              '--hidden-import', 'release_smoke', '--exclude-module', 'torch',
-             '--exclude-module', 'numpy', ROOT / 'main.py'])
+             '--exclude-module', 'numpy', *native_dependencies, ROOT / 'main.py'])
     manifest = {'version': VERSION, 'source_commit': subprocess.check_output(
         ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(), 'staged_source_files': files,
         'prerequisite_signatures': signatures,

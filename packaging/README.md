@@ -1,20 +1,99 @@
 # Windows installer
 
-`Music2Mic.iss` packages the prepared `dist/Music2Mic/` tree. It does not create
-that tree or install development dependencies. The payload must contain
-`Music2Mic.exe`, `config.example.json`, the portable CUDA runtime, the
-`voice-changer/` source and model paths, `musics/`, and third-party notices.
-The executable may be a PyInstaller one-file GUI; its external CUDA runtime and
-model files remain at their prepared paths.
+The release has a one-file GUI, an external portable CUDA runtime, the complete
+voice model files, and preset audio. Users install the resulting package and
+do not need Python or pip. The following steps are for the release builder.
 
-Compile with Inno Setup 7 from the repository root:
+Run these commands from the repository root on Windows x64. First prepare the
+player and CUDA source environments described in the [main README](../README.md),
+and retrieve the real Git LFS assets. The runtime builder copies dependencies
+from the validated `voice-changer/.venv/Lib/site-packages` environment.
+
+```powershell
+git lfs pull
+git lfs fsck
+uv pip install --python '.\.venv\Scripts\python.exe' -r '.\packaging\requirements-build.txt'
+```
+
+## 1. Build the portable CUDA runtime
+
+```powershell
+& '.\.venv\Scripts\python.exe' '.\scripts\build_voice_runtime.py' --validate-model
+```
+
+This downloads and verifies CPython's official embeddable archive, stages its
+runtime and the validated CUDA packages under
+`dist/Music2Mic/voice-changer/runtime/`, and checks isolated imports, a CUDA
+calculation, and real model conversion. It retains package metadata and license
+files while excluding compiled caches and unused development libraries. It
+uses NTFS hardlinks when possible; `--copy` forces independent copies. Model
+validation reports go under `work/voice-runtime-validation/`.
+
+## 2. Stage the application and build the GUI
+
+```powershell
+& '.\.venv\Scripts\python.exe' '.\scripts\build_windows.py'
+```
+
+This stages tracked backend source, model files, audio, example configuration,
+and notices into `dist/Music2Mic/`. It downloads the original prerequisite
+installers, checks their Authenticode publishers, and builds `Music2Mic.exe`
+using the pinned PyInstaller dependencies. It also writes `build-info.json`.
+No development virtual environment is copied into the payload.
+
+The staged directory is the complete application. Keep the EXE together with
+its `voice-changer/`, `musics/`, and other supporting files. `--skip-gui` can
+restage unchanged assets without rebuilding an already validated GUI.
+
+## 3. Verify the frozen application and compile the installer
+
+Close other Music2Mic instances and run the explicit release smoke mode. This
+opens the packaged GUI and a real physical-microphone-to-CABLE audio stream,
+exercises preset handoffs and loops, and closes itself. It keeps PTT disabled
+and uses temporary configuration. It requires working VB-CABLE and an NVIDIA
+driver; it does not test CS2 or voice-network latency.
+
+```powershell
+New-Item -ItemType Directory -Path '.\work\release-qa' -Force | Out-Null
+$qaReportPath = [System.IO.Path]::GetFullPath('.\work\release-qa\frozen-report.json')
+$qaProcess = Start-Process -FilePath '.\dist\Music2Mic\Music2Mic.exe' -ArgumentList @('--release-smoke-report', ('"{0}"' -f $qaReportPath)) -PassThru -Wait
+if ($qaProcess.ExitCode -ne 0) { throw 'Frozen application smoke test failed.' }
+$qaReport = Get-Content -LiteralPath $qaReportPath -Raw | ConvertFrom-Json
+if (-not $qaReport.passed) { throw 'Frozen application report did not pass.' }
+```
+
+After the smoke test passes, compile with the portable Inno Setup tool described
+below:
+
+```powershell
+& '.\.venv\Scripts\python.exe' '.\scripts\build_windows.py' --skip-gui --installer
+```
+
+The default compiler is `work/tools/InnoSetup7/ISCC.exe`; pass `--iscc` to select
+another installation. The installer output is `dist/installer/`. The script's
+explicit file exclusions keep runtime reports, logs, `.cache`, `__pycache__`,
+and generated `active_*.wav` samples out of the installer even if the staged
+application was used for QA.
+
+To compile an already staged payload directly, including a version override:
 
 ```powershell
 & '.\work\tools\InnoSetup7\ISCC.exe' --define=MyAppVersion=0.1.0 '.\packaging\Music2Mic.iss'
 ```
 
-`AppSourceDir` and `InstallerOutputDir` can also be overridden with `--define` compiler
-definitions. The default output is `dist/installer/`.
+`AppSourceDir` and `InstallerOutputDir` can also be overridden with `--define`
+compiler definitions. Install the resulting package into a separate test
+directory and repeat the frozen smoke test against its installed EXE before
+publishing. Leave the optional VB-CABLE installation unchecked on a machine
+where the driver is already installed.
+
+```powershell
+$installedQaRoot = [System.IO.Path]::GetFullPath('.\work\installed-qa')
+Start-Process -FilePath '.\dist\installer\Music2Mic-0.1.0-Windows-x64-Setup.exe' -ArgumentList ('/DIR="{0}"' -f $installedQaRoot) -Wait
+```
+
+For the installed smoke test, use `$installedQaRoot\Music2Mic.exe` as the
+executable and another absolute report filename under `work/release-qa/`.
 
 ## Release files
 

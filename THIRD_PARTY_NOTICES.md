@@ -44,6 +44,9 @@ Development environments are excluded from the source repository. Windows
 release installers include a portable Python runtime and these dependencies;
 their bundled license files and package metadata are retained under
 `voice-changer/runtime/`, and all packages retain their respective licenses.
+GUI dependency notices, including pygame, pynput, Python, Tcl/Tk, libffi, and
+PyInstaller's distribution terms, are included under `licenses/gui/` in the
+Windows installation. This directory also retains build-package notices.
 
 ## Supplied audio
 

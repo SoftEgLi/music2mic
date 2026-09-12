@@ -125,6 +125,51 @@ def validate_model(runtime, voice_root):
             "steady_cuda_memory": report["steady_cuda_memory"]}
 
 
+def publish_manifest(result, runtime):
+    """Keep complete build diagnostics locally; publish portable paths only."""
+    reports = ROOT / "work" / "voice-runtime-validation"
+    reports.mkdir(parents=True, exist_ok=True)
+    # This full report is intentionally outside dist, alongside the model log.
+    (reports / "runtime-manifest-full.json").write_text(
+        json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    replacements = [
+        (runtime, "${RUNTIME_ROOT}"),
+        (runtime.parent, "${VOICE_ROOT}"),
+        (runtime.parent.parent, "${PROJECT_ROOT}"),
+        (ROOT, "${BUILD_WORKSPACE}"),
+    ]
+    found = []
+
+    def portable(value, location=""):
+        if isinstance(value, dict):
+            return {key: portable(item, f"{location}.{key}".lstrip("."))
+                    for key, item in value.items()}
+        if isinstance(value, list):
+            return [portable(item, f"{location}[{index}]") for index, item in enumerate(value)]
+        if isinstance(value, str) and Path(value).is_absolute():
+            path = Path(value)
+            found.append({"field": location, "build_path": value})
+            for base, placeholder in replacements:
+                if path.is_relative_to(base):
+                    relative = path.relative_to(base).as_posix()
+                    return placeholder if relative == "." else f"{placeholder}/{relative}"
+            return "${BUILD_PATH}/" + path.name
+        return value
+
+    published = portable(result)
+    published["path_placeholders"] = {
+        "${RUNTIME_ROOT}": "Directory containing this manifest.",
+        "${VOICE_ROOT}": "Parent of RUNTIME_ROOT: the application's voice-changer directory.",
+        "${PROJECT_ROOT}": "Parent of VOICE_ROOT: the unpacked application directory.",
+        "${BUILD_WORKSPACE}": "Build-only workspace; not required or referenced when the application runs.",
+        "${BUILD_PATH}": "Other build-only diagnostic path; not a runtime dependency.",
+    }
+    (runtime / "runtime-manifest.json").write_text(
+        json.dumps(published, ensure_ascii=False, indent=2), encoding="utf-8")
+    print("Sanitized build paths: " + json.dumps(found, ensure_ascii=True), flush=True)
+    return published
+
+
 def build(args):
     source = args.site_packages.resolve()
     runtime = args.destination.resolve()
@@ -204,8 +249,8 @@ def build(args):
         result["validation"] = validate_runtime(runtime)
     if args.validate_model:
         result["real_model_validation"] = validate_model(runtime, args.voice_root.resolve())
-    (runtime / "runtime-manifest.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(json.dumps(result, ensure_ascii=True, indent=2), flush=True)
+    published = publish_manifest(result, runtime)
+    print(json.dumps(published, ensure_ascii=True, indent=2), flush=True)
 
 
 if __name__ == "__main__":
